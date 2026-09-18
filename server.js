@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { initDatabase, getDailyUsage, getTransfersFromAccount } from './src/db.js';
 import { loginUser, logoutSession, userFromRequest, localAccessCode } from './src/auth.js';
-import { listAccountsForUser, getAccountForUser, recentActivityForUser } from './src/services/accounts.js';
+import { listAccountsForUser, getAccountDetail, recentActivityForUser } from './src/services/accounts.js';
 import { DAILY_LIMIT, transferFunds } from './src/services/transfers.js';
 import { handleAssistantMessage } from './src/services/assistant.js';
 
@@ -129,7 +129,7 @@ const server = http.createServer(async (req, res) => {
     if (accountMatch && req.method === 'GET') {
       const user = currentUser(req, res);
       if (!user) return;
-      const account = getAccountForUser(user.id, Number(accountMatch[1]));
+      const account = getAccountDetail(user.id, Number(accountMatch[1]));
       if (!account) return json(res, 404, { error: 'ACCOUNT_NOT_FOUND' });
       return json(res, 200, {
         account,

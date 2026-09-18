@@ -1,4 +1,8 @@
-import { getAccountsForUser, getOwnedAccount, getTransfersForUser } from '../db.js';
+import {
+  findAccountsForCustomer,
+  findAccountDetail,
+  findRecentActivityForCustomer
+} from '../repositories/accounts.js';
 
 function presentAccount(account) {
   return account ? {
@@ -23,6 +27,14 @@ function presentTransfer(row) {
   };
 }
 
-export function listAccountsForUser(userId) { return getAccountsForUser(userId).map(presentAccount); }
-export function getAccountForUser(userId, accountId) { return presentAccount(getOwnedAccount(userId, accountId)); }
-export function recentActivityForUser(userId) { return getTransfersForUser(userId).map(presentTransfer); }
+export function listAccountsForUser(userId) {
+  return findAccountsForCustomer(userId).map(presentAccount);
+}
+
+export function getAccountDetail(customerId, accountId) {
+  return presentAccount(findAccountDetail(customerId, accountId));
+}
+
+export function recentActivityForUser(userId) {
+  return findRecentActivityForCustomer(userId).map(presentTransfer);
+}
