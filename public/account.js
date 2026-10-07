@@ -26,7 +26,7 @@ async function boot() {
         <div class="status">利用可能</div>
       </div>
       <h3 class="section-title">最近の取引</h3>
-      <table class="activity"><tbody>${data.activity.map(row => `<tr><td>${new Date(row.created_at).toLocaleDateString('ja-JP')}</td><td>${row.beneficiary_name}<div class="small">${row.memo || ''}</div></td><td class="amount">-${yen(row.amount)}</td></tr>`).join('') || '<tr><td>取引履歴はありません</td></tr>'}</tbody></table>`;
+      <table class="activity"><tbody>${data.activity.map(row => `<tr><td>${new Date(row.created_at).toLocaleDateString('ja-JP')}</td><td><strong>${row.beneficiary_name}</strong><div class="small">振込先${row.memo ? ` ・ ${row.memo}` : ''}</div></td><td class="amount">-${yen(row.amount)}</td></tr>`).join('') || '<tr><td>取引履歴はありません</td></tr>'}</tbody></table>`;
   } catch {
     $('#content').innerHTML = '<div class="notice-banner"><strong>口座情報を表示できません。</strong><br>しばらくしてからもう一度お試しください。</div>';
   }

@@ -19,7 +19,7 @@ $('#accounts').innerHTML = data.accounts.map(account => `
   </div>`).join('');
 
 $('#activity').innerHTML = data.activity.map(row => `
-  <tr><td>${new Date(row.created_at).toLocaleDateString('ja-JP')}</td><td><strong>${row.beneficiary_name}</strong><div class="small">${row.memo || '—'}</div></td><td><span class="status">完了</span></td><td class="amount">-${yen(row.amount)}</td></tr>`).join('') || '<tr><td colspan="4">取引履歴はありません</td></tr>';
+  <tr><td>${new Date(row.created_at).toLocaleDateString('ja-JP')}</td><td><strong>${row.beneficiary_name}</strong><div class="small">振込先${row.memo ? ` ・ ${row.memo}` : ''}</div></td><td><span class="status">完了</span></td><td class="amount">-${yen(row.amount)}</td></tr>`).join('') || '<tr><td colspan="4">取引履歴はありません</td></tr>';
 
 $('#usageText').textContent = yen(data.transferUsage);
 $('#limitText').textContent = `/ ${yen(data.dailyLimit)}`;

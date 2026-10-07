@@ -36,7 +36,7 @@ export async function transferFunds({ userId, fromAccountId, toAccountId, amount
     const row = addTransfer({
       fromAccountId,
       toAccountId,
-      beneficiaryName: destination.displayName,
+      beneficiaryName: destination.beneficiaryName,
       amount,
       memo
     });
