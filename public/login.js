@@ -12,7 +12,7 @@ $('#loginForm').addEventListener('submit', async event => {
         accessCode: $('#accessCode').value
       })
     });
-    location.href = '/dashboard.html';
+    location.replace('/dashboard.html');
   } catch {
     toast('ログインできませんでした。ユーザーとアクセスコードを確認してください。', 'bad');
   }

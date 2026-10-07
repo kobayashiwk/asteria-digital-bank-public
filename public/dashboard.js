@@ -1,4 +1,6 @@
-import { $, api, attachLogout, requireLogin, yen } from './common.js';
+import { $, api, attachLogout, requireLogin, resetScrollPosition, scrollPageToTop, yen } from './common.js';
+
+resetScrollPosition();
 
 await requireLogin();
 attachLogout();
@@ -22,3 +24,6 @@ $('#activity').innerHTML = data.activity.map(row => `
 $('#usageText').textContent = yen(data.transferUsage);
 $('#limitText').textContent = `/ ${yen(data.dailyLimit)}`;
 $('#usageMeter').style.width = `${Math.min(100, data.transferUsage / data.dailyLimit * 100)}%`;
+
+// Keep the first post-login view anchored to the dashboard header after async content is rendered.
+requestAnimationFrame(scrollPageToTop);

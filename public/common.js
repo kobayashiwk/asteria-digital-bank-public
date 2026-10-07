@@ -1,6 +1,22 @@
 export const $ = selector => document.querySelector(selector);
 export const yen = value => `¥${Number(value).toLocaleString('ja-JP')}`;
 
+export function scrollPageToTop() {
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+  window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+}
+
+export function resetScrollPosition() {
+  if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+  }
+
+  scrollPageToTop();
+  requestAnimationFrame(scrollPageToTop);
+  window.addEventListener('pageshow', scrollPageToTop, { once: true });
+}
+
 export function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, c => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
