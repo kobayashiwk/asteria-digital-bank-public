@@ -1,4 +1,5 @@
 import { getOwnedAccount, getDailyUsage, addDailyUsage, adjustBalance, addTransfer } from '../db.js';
+import { withAccountLock, withUserLock } from '../locks.js';
 import { resolveDestinationAccount } from './account-directory.js';
 import { recordTransferValidation } from './transfer-audit.js';
 
@@ -9,34 +10,39 @@ export async function transferFunds({ userId, fromAccountId, toAccountId, amount
     throw Object.assign(new Error('Invalid amount'), { code: 'INVALID_AMOUNT', status: 400 });
   }
 
-  const source = getOwnedAccount(userId, fromAccountId);
-  if (!source) throw Object.assign(new Error('Account not found'), { code: 'ACCOUNT_NOT_FOUND', status: 404 });
-  if (getDailyUsage(userId) + amount > DAILY_LIMIT) {
-    throw Object.assign(new Error('Daily transfer limit exceeded'), { code: 'DAILY_LIMIT_EXCEEDED', status: 409 });
-  }
-  if (source.balance < amount) {
-    throw Object.assign(new Error('Insufficient balance'), { code: 'INSUFFICIENT_FUNDS', status: 409 });
-  }
+  // The daily limit is shared by all of a user's accounts, while the balance is
+  // scoped to the source account. Hold both locks across validation and mutation
+  // so another transfer cannot pass checks against stale state during the await.
+  return withUserLock(userId, () => withAccountLock(fromAccountId, async () => {
+    const source = getOwnedAccount(userId, fromAccountId);
+    if (!source) throw Object.assign(new Error('Account not found'), { code: 'ACCOUNT_NOT_FOUND', status: 404 });
+    if (getDailyUsage(userId) + amount > DAILY_LIMIT) {
+      throw Object.assign(new Error('Daily transfer limit exceeded'), { code: 'DAILY_LIMIT_EXCEEDED', status: 409 });
+    }
+    if (source.balance < amount) {
+      throw Object.assign(new Error('Insufficient balance'), { code: 'INSUFFICIENT_FUNDS', status: 409 });
+    }
 
-  const destination = resolveDestinationAccount(toAccountId);
-  if (!destination) throw Object.assign(new Error('Destination not found'), { code: 'DESTINATION_NOT_FOUND', status: 404 });
+    const destination = resolveDestinationAccount(toAccountId);
+    if (!destination) throw Object.assign(new Error('Destination not found'), { code: 'DESTINATION_NOT_FOUND', status: 404 });
 
-  await recordTransferValidation({
-    userId,
-    fromAccountId,
-    toAccountId,
-    amount
-  });
+    await recordTransferValidation({
+      userId,
+      fromAccountId,
+      toAccountId,
+      amount
+    });
 
-  adjustBalance(fromAccountId, -amount);
-  adjustBalance(toAccountId, amount);
-  addDailyUsage(userId, amount);
-  const row = addTransfer({
-    fromAccountId,
-    toAccountId,
-    beneficiaryName: destination.beneficiaryName,
-    amount,
-    memo
-  });
-  return { id: row.id, status: 'COMPLETED', amount };
+    adjustBalance(fromAccountId, -amount);
+    adjustBalance(toAccountId, amount);
+    addDailyUsage(userId, amount);
+    const row = addTransfer({
+      fromAccountId,
+      toAccountId,
+      beneficiaryName: destination.beneficiaryName,
+      amount,
+      memo
+    });
+    return { id: row.id, status: 'COMPLETED', amount };
+  }));
 }
