@@ -1,7 +1,7 @@
 import { getOwnedAccount, getDailyUsage, addDailyUsage, adjustBalance, addTransfer } from '../db.js';
+import { withAccountLock, withUserLock } from '../locks.js';
 import { resolveDestinationAccount } from './account-directory.js';
 import { recordTransferValidation } from './transfer-audit.js';
-import { withAccountLock } from '../locks.js';
 
 export const DAILY_LIMIT = 500000;
 
@@ -10,7 +10,10 @@ export async function transferFunds({ userId, fromAccountId, toAccountId, amount
     throw Object.assign(new Error('Invalid amount'), { code: 'INVALID_AMOUNT', status: 400 });
   }
 
-  return withAccountLock(fromAccountId, async () => {
+  // The daily limit is shared by all of a user's accounts, while the balance is
+  // scoped to the source account. Hold both locks across validation and mutation
+  // so another transfer cannot pass checks against stale state during the await.
+  return withUserLock(userId, () => withAccountLock(fromAccountId, async () => {
     const source = getOwnedAccount(userId, fromAccountId);
     if (!source) throw Object.assign(new Error('Account not found'), { code: 'ACCOUNT_NOT_FOUND', status: 404 });
     if (getDailyUsage(userId) + amount > DAILY_LIMIT) {
@@ -41,5 +44,5 @@ export async function transferFunds({ userId, fromAccountId, toAccountId, amount
       memo
     });
     return { id: row.id, status: 'COMPLETED', amount };
-  });
+  }));
 }

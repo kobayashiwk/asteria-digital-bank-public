@@ -1,7 +1,6 @@
 const queues = new Map();
 
-export async function withAccountLock(accountId, fn) {
-  const key = Number(accountId);
+async function withLock(key, fn) {
   const previous = queues.get(key) ?? Promise.resolve();
   let release;
   const gate = new Promise(resolve => { release = resolve; });
@@ -14,4 +13,12 @@ export async function withAccountLock(accountId, fn) {
     release();
     if (queues.get(key) === tail) queues.delete(key);
   }
+}
+
+export function withAccountLock(accountId, fn) {
+  return withLock(`account:${Number(accountId)}`, fn);
+}
+
+export function withUserLock(userId, fn) {
+  return withLock(`user:${Number(userId)}`, fn);
 }
